@@ -176,7 +176,7 @@ Convert PDFs to clean, SEO-optimized HTML with headings, TOC, figures, and schem
             )
 
             download_file = gr.File(
-                label="📁 Download",
+                label="📥 Download",
                 visible=False
             )
 
@@ -184,13 +184,13 @@ Convert PDFs to clean, SEO-optimized HTML with headings, TOC, figures, and schem
 
         # Event handlers
         convert_btn.click(
-            fn=lambda f, d, ni, nt, kt: handle_convert(f, d, ni, nt, kt, False),
+            fn=lambda f, d, ni, nt, kt: handle_convert(f, d, ni, nt, kt),
             inputs=[pdf_input, output_dir, no_images, no_toc, keep_toc_pages],
             outputs=[status_output, download_file]
         )
 
         convert_batch_btn.click(
-            fn=lambda f, d, ni, nt, kt: handle_batch(f, d, ni, nt, kt, False),
+            fn=lambda f, d, ni, nt, kt: handle_batch(f, d, ni, nt, kt),
             inputs=[folder_input, output_dir_batch, no_images_batch, no_toc_batch, keep_toc_pages_batch],
             outputs=[status_output, download_file]
         )
@@ -268,7 +268,7 @@ def handle_convert(pdf_file, output_dir, no_images, no_toc, keep_toc_pages, retu
 📝 Log:
 {stdout}
 
-📥 Your converted HTML file is ready to download. Click the file name above to download it to your computer.
+📥 Download your converted HTML file using the file component below.
         """
 
         if return_file:
@@ -320,7 +320,7 @@ def handle_batch(folder_path, output_dir, no_images, no_toc, keep_toc_pages, ret
         return f"❌ Folder not found: {folder}", None
 
     # Run conversion
-    stdout, stderr, returncode = convert_folder(folder, output_dir, no_images, no_toc, keep_toc_pages)
+    stdout, stderr, returncode = convert_folder(folder_path, output_dir, no_images, no_toc, keep_toc_pages)
 
     if returncode != 0:
         return f"""
@@ -354,14 +354,14 @@ def handle_batch(folder_path, output_dir, no_images, no_toc, keep_toc_pages, ret
 📝 Log:
 {stdout}
 
-📥 Browse your output directory to download the HTML files.
+📥 Browse your output directory to download to HTML files.
         """, None
     else:
         return f"""
 ❌ No HTML files found in output directory!
 
-📁 Input folder: {folder}
-📁 Output directory: `{output_dir_path}`
+📁 Input folder: `{folder}`
+📁 Output directory: `{output_dir}`
 
 📝 Command output:
 {stdout}
