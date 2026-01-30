@@ -15,7 +15,6 @@ Features:
 import os
 import subprocess
 import sys
-import shutil
 from pathlib import Path
 from datetime import datetime
 
@@ -176,15 +175,14 @@ Convert PDFs to clean, SEO-optimized HTML with headings, TOC, figures, and schem
                 max_lines=20
             )
 
-            download_btn = gr.Button("📥 Download Converted File", variant="secondary", size="lg")
+            download_file = gr.File(
+                label="📁 Download",
+                visible=False
+            )
 
-        download_file = gr.File(
-            label="📁 Download",
-            visible=False
-        )
-
-        with gr.Row():
-            clear_btn = gr.Button("🗑️ Clear", variant="secondary")
+            with gr.Row():
+                download_btn = gr.Button("📥 Download Converted File", variant="secondary", size="lg")
+                clear_btn = gr.Button("🗑️ Clear", variant="secondary")
 
         # Event handlers
         convert_btn.click(
@@ -199,14 +197,15 @@ Convert PDFs to clean, SEO-optimized HTML with headings, TOC, figures, and schem
             outputs=[status_output, download_file]
         )
 
-        download_btn.click(
-            fn=lambda: None,  # No change to status, just shows download button
-            outputs=[status_output]
+        clear_btn.click(
+            fn=lambda: ("", None),
+            outputs=[status_output, download_file]
         )
 
-        clear_btn.click(
-            fn=lambda: ("", None, ""),
-            outputs=[status_output, download_file]
+        # Download button just shows the status (file component updates from conversion)
+        download_btn.click(
+            fn=lambda: status_output,
+            outputs=[status_output]
         )
 
     return demo
@@ -277,20 +276,20 @@ def handle_convert(pdf_file, output_dir, no_images, no_toc, keep_toc_pages, retu
 📝 Log:
 {stdout}
 
-📥 Click "Download Converted File" button below to download the result!
+📥 Click "Download Converted File" button below to download the HTML file.
         """
 
         if return_file:
-            # Create a downloadable file component
-            return status_text, gr.File(value=str(output_file), visible=True, label=f"Download: {output_file.name}")
+            # Return status text and file path for Gradio
+            return status_text, str(output_file)
         else:
-            return status_text, gr.File(value=str(output_file), visible=False)
+            return status_text, None
+    else:
+        # File not found - show all files for debugging
+        all_files = list(output_dir_path.iterdir()) if output_dir_path.exists() else []
+        files_list = "\n".join(f"  - {f.name}" for f in all_files[:20])
 
-    # File not found - show all files for debugging
-    all_files = list(output_dir_path.iterdir()) if output_dir_path.exists() else []
-    files_list = "\n".join(f"  - {f.name}" for f in all_files[:20])
-
-    return f"""
+        return f"""
 ❌ Output file not found!
 
 📄 Input: `{pdf_path}`
@@ -314,7 +313,7 @@ This could mean:
 
 🔴 Error output:
 {stderr}
-    """, None
+        """, None
 
 def handle_batch(folder_path, output_dir, no_images, no_toc, keep_toc_pages, return_file=False):
     """Handle batch folder conversion."""
@@ -363,7 +362,7 @@ def handle_batch(folder_path, output_dir, no_images, no_toc, keep_toc_pages, ret
 📝 Log:
 {stdout}
 
-📥 Download individual files from the output directory if needed.
+📥 Download individual files from the output directory.
         """, None
     else:
         return f"""
