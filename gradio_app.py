@@ -222,13 +222,31 @@ def handle_convert(pdf_file, output_dir, no_images, no_toc, keep_toc_pages):
 {stdout}
         """
 
-    # Find output file (handle both flat file and directory structures)
+    # Find output file (search for actual output)
     output_dir_path = Path(output_dir)
     pdf_name = Path(pdf_path).stem
 
-    # Try directory structure first (batch mode)
-    output_file = output_dir_path / pdf_name / "index.html"
-    if output_file.exists():
+    # Search for output files in multiple patterns
+    output_file = None
+
+    # Try flat file structure (most common for single files)
+    possible_flat = output_dir_path / f"{pdf_name}.html"
+    if possible_flat.exists():
+        output_file = possible_flat
+
+    # Try directory structure (batch mode)
+    possible_dir = output_dir_path / pdf_name / "index.html"
+    if possible_dir.exists():
+        output_file = possible_dir
+
+    # Search for any HTML file with matching name
+    if not output_file and output_dir_path.exists():
+        for html_file in output_dir_path.glob("*.html"):
+            if pdf_name in html_file.stem:
+                output_file = html_file
+                break
+
+    if output_file:
         file_size = output_file.stat().st_size / 1024
         return f"""
 ✅ Conversion complete!
@@ -241,35 +259,28 @@ def handle_convert(pdf_file, output_dir, no_images, no_toc, keep_toc_pages):
 {stdout}
         """
 
-    # Try flat file structure (single file mode)
-    output_file = output_dir_path / f"{pdf_name}.html"
-    if output_file.exists():
-        file_size = output_file.stat().st_size / 1024
-        return f"""
-✅ Conversion complete!
+    # File not found - show all files for debugging
+    all_files = list(output_dir_path.iterdir()) if output_dir_path.exists() else []
+    files_list = "\n".join(f"  - {f.name}" for f in all_files[:20])
 
-📄 Input: `{pdf_path}`
-📁 Output: `{output_file}`
-📊 Size: {file_size:.1f} KB
-
-📝 Log:
-{stdout}
-        """
-
-    # File not found
     return f"""
 ❌ Output file not found!
 
 📄 Input: `{pdf_path}`
-📁 Expected output: `{output_dir_path / pdf_name / "index.html"}` or `{output_dir_path / f"{pdf_name}.html"}`
+📁 Output directory: `{output_dir_path}`
+
+Searched for:
+1. `{output_dir_path / f"{pdf_name}.html"}` (flat file)
+2. `{output_dir_path / pdf_name / "index.html"}` (directory structure)
+3. Any HTML file containing `{pdf_name}` in name
 
 Files in output directory:
-{list(output_dir_path.iterdir())}
+{files_list}
 
 This could mean:
 1. Conversion failed silently
-2. Output file is in a different location
-3. Output directory permission issue
+2. Output file has different name
+3. Output directory issue
 
 📝 Command output:
 {stdout}
