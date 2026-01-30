@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Gradio Web App Wrapper for PDF-to-HTML Converter
-Provides drag-and-drop interface for the PyMuPDF-based converter.
+Provides drag-and-drop interface for PyMuPDF-based converter.
 
 Features:
 - Drag and drop PDF upload
@@ -156,8 +156,8 @@ Convert PDFs to clean, SEO-optimized HTML with headings, TOC, figures, and schem
 
             status_output = gr.Textbox(
                 label="⏳ Status",
-                lines=3,
-                max_lines=10
+                lines=10,
+                max_lines=20
             )
 
         with gr.Row():
@@ -188,22 +188,20 @@ def handle_convert(pdf_file, output_dir, no_images, no_toc, keep_toc_pages):
     if not pdf_file:
         return "❌ No PDF file selected"
 
-    yield "⏳ Starting conversion..."
-
     # Get file path
     pdf_path = pdf_file.name
 
     result = convert_pdf(pdf_path, output_dir, no_images, no_toc, keep_toc_pages)
 
     if result.startswith("Error"):
-        yield f"❌ {result}"
+        return f"❌ {result}"
     else:
         # Find output file
         output_dir_path = output_dir.rstrip('/')
         pdf_name = Path(pdf_path).stem
         output_file = Path(output_dir_path) / pdf_name / "index.html"
 
-        yield f"""
+        return f"""
 ✅ Conversion complete!
 
 📄 Input: `{pdf_path}`
@@ -223,20 +221,15 @@ def handle_batch(folder_path, output_dir, no_images, no_toc, keep_toc_pages):
     if not os.path.isdir(folder):
         return f"❌ Folder not found: {folder}"
 
-    yield "⏳ Scanning folder..."
-
     try:
         pdf_count = len([f for f in Path(folder).rglob("*") if f.is_file() and f.suffix.lower() == '.pdf'])
-
-        yield f"📊 Found {pdf_count} PDF files"
-        yield "⏳ Starting batch conversion..."
 
         result = convert_folder(folder, output_dir, no_images, no_toc, keep_toc_pages)
 
         if result.startswith("Error"):
-            yield f"❌ {result}"
+            return f"❌ {result}"
         else:
-            yield f"""
+            return f"""
 ✅ Batch conversion complete!
 
 📁 Folder: {folder}
@@ -247,7 +240,7 @@ def handle_batch(folder_path, output_dir, no_images, no_toc, keep_toc_pages):
             """
 
     except Exception as e:
-        yield f"❌ Batch error: {e}"
+        return f"❌ Batch error: {e}"
 
 def verify_converter():
     """Check if converter script exists."""
