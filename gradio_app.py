@@ -26,6 +26,14 @@ except ImportError:
 DEFAULT_OUTPUT_DIR = "/home/clawdbot/clawd/pdf-to-html/out"
 CONVERTER_SCRIPT = "/home/clawdbot/clawd/pdf-to-html-fork/scripts/pdf_to_semantic_html.py"
 
+# Set up environment with user's site-packages
+ENV = os.environ.copy()
+USER_SITE = os.path.expanduser('~/.local/lib/python3.12/site-packages')
+if 'PYTHONPATH' in ENV:
+    ENV['PYTHONPATH'] = USER_SITE + ':' + ENV['PYTHONPATH']
+else:
+    ENV['PYTHONPATH'] = USER_SITE
+
 def convert_pdf(pdf_path, output_dir, no_images=False, no_toc=False, keep_toc_pages=False):
     """Run pdf_to_semantic_html.py with custom options."""
     # Ensure output directory is absolute
@@ -45,7 +53,7 @@ def convert_pdf(pdf_path, output_dir, no_images=False, no_toc=False, keep_toc_pa
         cmd.append("--keep-toc-pages")
 
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True, env=ENV)
         return result.stdout, result.stderr, 0
     except subprocess.CalledProcessError as e:
         return e.stdout, e.stderr, e.returncode
@@ -70,7 +78,7 @@ def convert_folder(folder_path, output_dir, no_images, no_toc, keep_toc_pages):
         cmd.append("--keep-toc-pages")
 
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True, env=ENV)
         return result.stdout, result.stderr, 0
     except subprocess.CalledProcessError as e:
         return e.stdout, e.stderr, e.returncode
