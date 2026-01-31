@@ -14,6 +14,7 @@ Features:
 import os
 import subprocess
 import sys
+import zipfile
 from pathlib import Path
 from datetime import datetime
 
@@ -191,6 +192,30 @@ Convert PDFs to clean, SEO-optimized HTML with headings, TOC, figures, and schem
 
     return demo
 
+def create_zip_with_images(html_file, output_dir_path):
+    """Create a ZIP file containing HTML and images folder if it exists."""
+    pdf_name = html_file.stem
+    images_dir = html_file.parent / "images"
+
+    # Check if images directory exists and has content
+    if not images_dir.exists() or not list(images_dir.glob("*")):
+        return html_file  # No images to include
+
+    # Create ZIP file
+    zip_path = html_file.parent / f"{pdf_name}_with_images.zip"
+
+    with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        # Add HTML file (put it in the root of ZIP)
+        zipf.write(html_file, html_file.name)
+
+        # Add images folder with all images
+        for img_file in images_dir.glob("*"):
+            if img_file.is_file():
+                # Add with relative path: images/filename.ext
+                zipf.write(img_file, f"images/{img_file.name}")
+
+    return zip_path
+
 def handle_convert(pdf_file, output_dir, no_images, no_toc, keep_toc_pages):
     """Handle single PDF conversion."""
     if not pdf_file:
@@ -220,16 +245,33 @@ def handle_convert(pdf_file, output_dir, no_images, no_toc, keep_toc_pages):
 
     if output_file:
         file_size = output_file.stat().st_size / 1024
-        status_text = (
-            "✅ Conversion complete!\n\n"
-            f"📄 Input: `{pdf_path}`\n"
-            f"📁 Output: `{output_file}`\n"
-            f"📊 Size: {file_size:.1f} KB\n\n"
-            f"📝 Log:\n{stdout}\n\n"
-            "📥 File ready for download below!"
-        )
 
-        return status_text, gr.update(value=str(output_file), visible=True)
+        # Create ZIP with images if they exist
+        download_file = create_zip_with_images(output_file, output_dir_path)
+
+        # If we created a ZIP, use that for download
+        if download_file != output_file:
+            file_size_zip = download_file.stat().st_size / 1024
+            status_text = (
+                "✅ Conversion complete!\n\n"
+                f"📄 Input: `{pdf_path}`\n"
+                f"📁 Output: `{output_file.name}`\n"
+                f"📦 Download: `{download_file.name}` (HTML + images)\n"
+                f"📊 Size: {file_size:.1f} KB (HTML), {file_size_zip:.1f} KB (ZIP)\n\n"
+                f"📝 Log:\n{stdout}\n\n"
+                "📥 File ready for download below! (ZIP contains HTML + images folder)"
+            )
+        else:
+            status_text = (
+                "✅ Conversion complete!\n\n"
+                f"📄 Input: `{pdf_path}`\n"
+                f"📁 Output: `{output_file.name}`\n"
+                f"📊 Size: {file_size:.1f} KB\n\n"
+                f"📝 Log:\n{stdout}\n\n"
+                "📥 File ready for download below!"
+            )
+
+        return status_text, gr.update(value=str(download_file), visible=True)
     else:
         return (
             "❌ Output file not found!\n\n"
