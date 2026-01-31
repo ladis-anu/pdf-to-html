@@ -185,7 +185,7 @@ Convert PDFs to clean, SEO-optimized HTML with headings, TOC, figures, and schem
         )
 
         clear_btn.click(
-            fn=lambda: ("", gr.File.update(value=None, visible=False)),
+            fn=lambda: ("", gr.update(value=None, visible=False)),
             outputs=[status_output, download_file]
         )
 
@@ -194,7 +194,7 @@ Convert PDFs to clean, SEO-optimized HTML with headings, TOC, figures, and schem
 def handle_convert(pdf_file, output_dir, no_images, no_toc, keep_toc_pages):
     """Handle single PDF conversion."""
     if not pdf_file:
-        return "❌ No PDF file selected", gr.File.update(value=None, visible=False)
+        return "❌ No PDF file selected", gr.update(value=None, visible=False)
 
     pdf_path = pdf_file.name
     stdout, stderr, returncode = convert_pdf(pdf_path, output_dir, no_images, no_toc, keep_toc_pages)
@@ -207,7 +207,7 @@ def handle_convert(pdf_file, output_dir, no_images, no_toc, keep_toc_pages):
             f"🔴 Exit code: {returncode}\n"
             f"❓ Error output:\n{stderr}\n"
             f"📝 Standard output:\n{stdout}"
-        ), gr.File.update(value=None, visible=False)
+        ), gr.update(value=None, visible=False)
 
     output_dir_path = Path(output_dir)
     pdf_name = Path(pdf_path).stem
@@ -229,24 +229,24 @@ def handle_convert(pdf_file, output_dir, no_images, no_toc, keep_toc_pages):
             "📥 File ready for download below!"
         )
 
-        return status_text, gr.File.update(value=str(output_file), visible=True)
+        return status_text, gr.update(value=str(output_file), visible=True)
     else:
         return (
             "❌ Output file not found!\n\n"
             f"📄 Input: `{pdf_path}`\n"
             f"📁 Output directory: `{output_dir_path}`\n\n"
             f"Searched for: {pdf_name}*.html"
-        ), gr.File.update(value=None, visible=False)
+        ), gr.update(value=None, visible=False)
 
 def handle_batch(folder_path, output_dir, no_images, no_toc, keep_toc_pages):
     """Handle batch folder conversion."""
     if not folder_path:
-        return "❌ No folder path provided", gr.File.update(value=None, visible=False)
+        return "❌ No folder path provided", gr.update(value=None, visible=False)
 
     folder = folder_path.strip()
 
     if not os.path.isdir(folder):
-        return f"❌ Folder not found: {folder}", gr.File.update(value=None, visible=False)
+        return f"❌ Folder not found: {folder}", gr.update(value=None, visible=False)
 
     stdout, stderr, returncode = convert_folder(folder_path, output_dir, no_images, no_toc, keep_toc_pages)
 
@@ -258,7 +258,7 @@ def handle_batch(folder_path, output_dir, no_images, no_toc, keep_toc_pages):
             f"🔴 Exit code: {returncode}\n"
             f"❓ Error output:\n{stderr}\n"
             f"📝 Standard output:\n{stdout}"
-        ), gr.File.update(value=None, visible=False)
+        ), gr.update(value=None, visible=False)
 
     output_dir_path = Path(output_dir)
     html_files = list(output_dir_path.glob("**/index.html"))
@@ -271,7 +271,7 @@ def handle_batch(folder_path, output_dir, no_images, no_toc, keep_toc_pages):
             f"📊 Generated: {len(html_files)} HTML files\n\n"
             f"📝 Log:\n{stdout}\n\n"
             "📥 Browse output directory for individual files"
-        ), gr.File.update(value=None, visible=False)
+        ), gr.update(value=None, visible=False)
     else:
         return (
             "❌ No HTML files found in output directory!\n\n"
@@ -279,7 +279,7 @@ def handle_batch(folder_path, output_dir, no_images, no_toc, keep_toc_pages):
             f"📁 Output directory: `{output_dir_path}`\n"
             f"📝 Log:\n{stdout}\n"
             f"❓ Error output:\n{stderr}"
-        ), gr.File.update(value=None, visible=False)
+        ), gr.update(value=None, visible=False)
 
 if __name__ == "__main__":
     print(f"✅ Converter found: {CONVERTER_SCRIPT}")
